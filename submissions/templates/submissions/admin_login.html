@@ -1,0 +1,44 @@
+{% extends 'submissions/base.html' %}
+{% load static %}
+
+{% block title %}Administrator Login &bull; TaskPortal{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="max-width: 480px;">
+  <div class="card">
+    <div class="card-header">
+      <div class="brand-icon" style="margin: 0 auto 1rem; width: 3.5rem; height: 3.5rem; font-size: 1.5rem;">
+        🔒
+      </div>
+      <h1 class="card-title">Admin Login</h1>
+      <p class="card-subtitle">Sign in to manage student submissions and download ZIP archives.</p>
+    </div>
+
+    <form method="POST" action="{% url 'submissions:admin_login' %}?next={{ next|urlencode }}">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="id_username" class="form-label">Username</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="form-error-msg">{{ form.username.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="id_password" class="form-label">Password</label>
+        {{ form.password }}
+        {% if form.password.errors %}
+          <div class="form-error-msg">{{ form.password.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div style="margin-top: 2rem;">
+        <button type="submit" class="btn-primary">
+          Sign In to Dashboard
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,204 @@
+{% extends 'submissions/base.html' %}
+{% load static %}
+
+{% block title %}Submission #{{ submission.id }} Details &bull; TaskPortal{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'submissions/css/admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Breadcrumb & Navigation -->
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{% url 'submissions:dashboard' %}" class="btn-filter-reset" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+      &larr; Back to Dashboard
+    </a>
+  </div>
+
+  <div class="dashboard-topbar">
+    <div>
+      <h1 class="page-title">Submission Details</h1>
+      <p class="page-subtitle">Submission record ID: #{{ submission.id }}</p>
+    </div>
+  </div>
+
+  <div class="detail-grid">
+    <!-- Main Details Card -->
+    <div class="detail-card">
+      <h2 class="detail-section-title">Student &amp; Task Information</h2>
+
+      <div class="detail-info-row">
+        <span class="detail-info-label">Submission ID</span>
+        <span class="detail-info-value">#{{ submission.id }}</span>
+      </div>
+
+      <div class="detail-info-row">
+        <span class="detail-info-label">Student Name</span>
+        <span class="detail-info-value">{{ submission.student_name }}</span>
+      </div>
+
+      <div class="detail-info-row">
+        <span class="detail-info-label">Task Name</span>
+        <span class="detail-info-value">{{ submission.task_name }}</span>
+      </div>
+
+      <div class="detail-info-row">
+        <span class="detail-info-label">Current Review Status</span>
+        <span class="detail-info-value">
+          {% if submission.status == 'Reviewed' %}
+            <span class="badge-status badge-reviewed">Reviewed</span>
+          {% else %}
+            <span class="badge-status badge-pending">Pending</span>
+          {% endif %}
+        </span>
+      </div>
+
+      <div class="detail-info-row">
+        <span class="detail-info-label">Original ZIP Filename</span>
+        <span class="detail-info-value">{{ submission.original_filename }}</span>
+      </div>
+
+      <div class="detail-info-row">
+        <span class="detail-info-label">Stored Server Filename</span>
+        <span class="detail-info-value" style="font-family: monospace; font-size: 0.85rem;">
+          {{ submission.stored_filename }}
+        </span>
+      </div>
+
+      <div class="detail-info-row">
+        <span class="detail-info-label">File Size</span>
+        <span class="detail-info-value">{{ submission.file_size_formatted }} ({{ submission.file_size }} bytes)</span>
+      </div>
+
+      <!-- Binary SHA-256 Checksum -->
+      <div class="detail-info-row">
+        <span class="detail-info-label">SHA-256 Checksum</span>
+        <span class="detail-info-value" style="font-family: monospace; font-size: 0.8rem; word-break: break-all;">
+          {{ submission.sha256_checksum|default:"Not calculated" }}
+          {% if submission.sha256_checksum %}
+            <button type="button" class="btn-copy btn-copy-id" data-id="{{ submission.sha256_checksum }}" title="Copy SHA-256 Hash" style="margin-left: 0.5rem;">
+              Copy Hash
+            </button>
+          {% endif %}
+        </span>
+      </div>
+
+      <div class="detail-info-row">
+        <span class="detail-info-label">Storage Availability</span>
+        <span class="detail-info-value">
+          {% if submission.is_file_available %}
+            <span style="color: var(--success-text); font-weight: 600;">✓ Available on disk</span>
+          {% else %}
+            <span style="color: var(--danger-text); font-weight: 600;">⚠ Missing from disk</span>
+          {% endif %}
+        </span>
+      </div>
+
+      <!-- Google Drive Synchronization Info -->
+      <div class="detail-info-row">
+        <span class="detail-info-label">Google Drive Status</span>
+        <span class="detail-info-value">
+          {% if submission.google_drive_status == 'Uploaded' %}
+            <span class="badge-status badge-gdrive-uploaded">☁️ Uploaded</span>
+          {% elif submission.google_drive_status == 'Failed' %}
+            <span class="badge-status badge-gdrive-failed">❌ Failed</span>
+          {% else %}
+            <span class="badge-status badge-gdrive-not-uploaded">Not Uploaded</span>
+          {% endif %}
+        </span>
+      </div>
+
+      {% if submission.google_drive_file_id %}
+        <div class="detail-info-row">
+          <span class="detail-info-label">Google Drive File ID</span>
+          <span class="detail-info-value" style="font-family: monospace; font-size: 0.85rem;">
+            {{ submission.google_drive_file_id }}
+          </span>
+        </div>
+      {% endif %}
+
+      {% if submission.google_drive_url %}
+        <div class="detail-info-row">
+          <span class="detail-info-label">Google Drive Link</span>
+          <span class="detail-info-value">
+            <a href="{{ submission.google_drive_url }}" target="_blank" rel="noopener noreferrer" style="color: var(--primary); text-decoration: underline; font-weight: 600;">
+              Open in Google Drive &UpperRightArrow;
+            </a>
+          </span>
+        </div>
+      {% endif %}
+
+      {% if submission.google_drive_uploaded_at %}
+        <div class="detail-info-row">
+          <span class="detail-info-label">Google Drive Sync Time</span>
+          <span class="detail-info-value">{{ submission.google_drive_uploaded_at|date:"F d, Y, h:i:s A" }} UTC</span>
+        </div>
+      {% endif %}
+
+      {% if submission.google_drive_error %}
+        <div class="detail-info-row" style="background-color: var(--danger-light); padding: 0.75rem; border-radius: var(--radius-md);">
+          <span class="detail-info-label" style="color: var(--danger-text);">Google Drive Error Log</span>
+          <span class="detail-info-value" style="color: var(--danger-text); font-size: 0.85rem;">{{ submission.google_drive_error }}</span>
+        </div>
+      {% endif %}
+
+      <div class="detail-info-row">
+        <span class="detail-info-label">Submitted Timestamp</span>
+        <span class="detail-info-value">{{ submission.submitted_at|date:"F d, Y, h:i:s A" }} UTC</span>
+      </div>
+
+      <div class="detail-info-row">
+        <span class="detail-info-label">Last Updated</span>
+        <span class="detail-info-value">{{ submission.updated_at|date:"F d, Y, h:i:s A" }} UTC</span>
+      </div>
+    </div>
+
+    <!-- Actions Sidebar Card -->
+    <div>
+      <div class="action-card">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">Submission Actions</h3>
+
+        <!-- Save/Re-upload to Google Drive -->
+        <a href="{% url 'submissions:save_to_google_drive' submission.id %}" class="btn-gdrive-all" style="text-decoration: none; justify-content: center;">
+          <span>☁️</span>
+          <span>
+            {% if submission.google_drive_status == 'Uploaded' %}
+              Re-sync to Google Drive
+            {% else %}
+              Save to Google Drive
+            {% endif %}
+          </span>
+        </a>
+
+        <!-- Download Original ZIP -->
+        <a href="{% url 'submissions:download_submission_zip' submission.id %}" class="btn-primary" style="text-decoration: none;">
+          <span>📦</span>
+          <span>Download Original ZIP</span>
+        </a>
+
+        <!-- Mark Reviewed / Pending -->
+        <form method="POST" action="{% url 'submissions:mark_reviewed' submission.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="btn-secondary" style="width: 100%;">
+            {% if submission.status == 'Pending' %}
+              ✓ Mark as Reviewed
+            {% else %}
+              ⏳ Revert to Pending
+            {% endif %}
+          </button>
+        </form>
+
+        <a href="{% url 'submissions:dashboard' %}" class="btn-filter-reset" style="text-align: center;">
+          Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'submissions/js/admin.js' %}"></script>
+{% endblock %}

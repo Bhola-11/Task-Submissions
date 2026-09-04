@@ -1,0 +1,141 @@
+{% extends 'submissions/base.html' %}
+{% load static %}
+
+{% block title %}Submit Student Task &bull; TaskPortal{% endblock %}
+
+{% block content %}
+<div class="container container-narrow">
+  <div class="card">
+    <div class="card-header">
+      <h1 class="card-title">Student Task Submission</h1>
+      <p class="card-subtitle">Upload your completed project assignment archive for evaluation.</p>
+    </div>
+
+    <!-- Dynamic Error Alert -->
+    <div id="errorAlert" class="alert alert-danger" style="display: none;" role="alert">
+      <div id="errorAlertMessage"></div>
+    </div>
+
+    <form 
+      id="submissionForm" 
+      method="POST" 
+      enctype="multipart/form-data" 
+      action="{% url 'submissions:submit' %}"
+      data-max-size-mb="{{ MAX_FILE_SIZE_MB }}"
+      data-max-size-bytes="{{ MAX_FILE_SIZE_BYTES }}"
+      novalidate
+    >
+      {% csrf_token %}
+
+      <!-- Student Name -->
+      <div class="form-group">
+        <label for="id_student_name" class="form-label">
+          Student Name <span class="required-mark">*</span>
+        </label>
+        {{ form.student_name }}
+        {% if form.student_name.errors %}
+          <div class="form-error-msg">
+            {{ form.student_name.errors.0 }}
+          </div>
+        {% endif %}
+        <p class="form-help">Enter your full legal or registered student name (min 2 characters).</p>
+      </div>
+
+      <!-- Task Name -->
+      <div class="form-group">
+        <label for="id_task_name" class="form-label">
+          Task Name <span class="required-mark">*</span>
+        </label>
+        {{ form.task_name }}
+        {% if form.task_name.errors %}
+          <div class="form-error-msg">
+            {{ form.task_name.errors.0 }}
+          </div>
+        {% endif %}
+        <p class="form-help">e.g. Portfolio, E-Commerce, AI Chatbot (min 2 characters).</p>
+      </div>
+
+      <!-- ZIP File Upload Area -->
+      <div class="form-group">
+        <label class="form-label">
+          Upload Task ZIP <span class="required-mark">*</span>
+        </label>
+        
+        <!-- Hidden Actual Input -->
+        {{ form.file }}
+
+        <!-- Drag & Drop Interactive Zone -->
+        <div 
+          id="uploadDropzone" 
+          class="upload-dropzone" 
+          tabindex="0" 
+          role="button" 
+          aria-label="Drag and drop or click to upload ZIP file"
+        >
+          <div class="upload-icon-box">📦</div>
+          <div class="upload-prompt-title">Drag &amp; Drop your ZIP here</div>
+          <div class="upload-prompt-subtitle">OR</div>
+          <div>
+            <button type="button" class="upload-btn-secondary">
+              Choose ZIP File
+            </button>
+          </div>
+          <div class="upload-specs">
+            Only <strong>.zip</strong> archives accepted &bull; Maximum size: <strong>{{ MAX_FILE_SIZE_MB }} MB</strong>
+          </div>
+        </div>
+
+        <!-- File Selected Preview Card -->
+        <div id="filePreviewCard" class="file-preview-card">
+          <div class="file-preview-info">
+            <div class="file-preview-details">
+              <div class="zip-badge-icon">🗜️</div>
+              <div class="file-meta-text">
+                <div id="fileNameDisplay" class="file-name-display">filename.zip</div>
+                <div id="fileSizeDisplay" class="file-size-display">0 MB</div>
+              </div>
+            </div>
+            <div class="file-preview-actions">
+              <button type="button" id="replaceFileBtn" class="btn-file-action">
+                Replace
+              </button>
+              <button type="button" id="removeFileBtn" class="btn-file-action btn-file-remove">
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {% if form.file.errors %}
+          <div class="form-error-msg">
+            {{ form.file.errors.0 }}
+          </div>
+        {% endif %}
+
+        <!-- Real-time Progress Bar -->
+        <div id="progressContainer" class="progress-container">
+          <div class="progress-header">
+            <span>Uploading ZIP file...</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div id="progressBar" class="progress-bar-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div style="margin-top: 2rem;">
+        <button type="submit" id="submitBtn" class="btn-primary">
+          <span id="submitBtnSpinner" class="spinner" style="display: none;"></span>
+          <span id="submitBtnText">Submit Task</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'submissions/js/upload.js' %}"></script>
+{% endblock %}

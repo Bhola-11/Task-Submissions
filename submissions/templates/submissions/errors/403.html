@@ -1,0 +1,18 @@
+{% extends 'submissions/base.html' %}
+
+{% block title %}403 - Access Forbidden &bull; TaskPortal{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="text-align: center;">
+  <div class="card">
+    <div style="font-size: 4rem; margin-bottom: 1rem;">🛑</div>
+    <h1 class="card-title">403 - Access Denied</h1>
+    <p class="card-subtitle" style="margin-bottom: 2rem;">
+      {{ error_message|default:"You do not have permission to access this administrative section." }}
+    </p>
+    <a href="{% url 'submissions:admin_login' %}" class="btn-primary" style="display: inline-flex; width: auto;">
+      Sign in as Administrator
+    </a>
+  </div>
+</div>
+{% endblock %}

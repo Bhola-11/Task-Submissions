@@ -1,0 +1,18 @@
+{% extends 'submissions/base.html' %}
+
+{% block title %}400 - Bad Request &bull; TaskPortal{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="text-align: center;">
+  <div class="card">
+    <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+    <h1 class="card-title">400 - Bad Request</h1>
+    <p class="card-subtitle" style="margin-bottom: 2rem;">
+      {{ error_message|default:"The server could not understand your request." }}
+    </p>
+    <a href="{% url 'submissions:submit' %}" class="btn-primary" style="display: inline-flex; width: auto;">
+      Return to Home
+    </a>
+  </div>
+</div>
+{% endblock %}

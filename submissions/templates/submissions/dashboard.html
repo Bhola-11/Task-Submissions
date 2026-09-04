@@ -1,0 +1,289 @@
+{% extends 'submissions/base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard &bull; Student Task Submissions{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'submissions/css/admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Top Bar with Actions -->
+  <div class="dashboard-topbar">
+    <div>
+      <h1 class="page-title">Student Task Submissions</h1>
+      <p class="page-subtitle">Manage, review, download, and sync student project ZIP submissions with Google Drive.</p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+      {% if oauth_status == 'Connected' %}
+        <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.55rem 0.9rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem;" title="Google Drive OAuth 2.0 connected with automatic offline refresh">
+          <span>✅</span>
+          <span>Drive: Connected</span>
+        </span>
+      {% elif oauth_status == 'Reconnect Required' %}
+        <!-- Reconnect Google Drive OAuth Button -->
+        <a href="{% url 'submissions:google_oauth_authorize' %}" class="btn-gdrive-all" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; border: none;" title="Google Drive authorization expired or revoked. Click to reconnect.">
+          <span>⚠️</span>
+          <span>Reconnect Required</span>
+        </a>
+      {% else %}
+        <!-- Connect Google Drive OAuth Button -->
+        <a href="{% url 'submissions:google_oauth_authorize' %}" class="btn-gdrive-all" style="background: linear-gradient(135deg, #4285F4 0%, #1a73e8 100%); color: #ffffff; border: none;" title="Connect personal Google Drive account via Google OAuth 2.0">
+          <span>🔑</span>
+          <span>Connect Google Drive</span>
+        </a>
+      {% endif %}
+
+      <!-- Save All to Google Drive Button -->
+      <a href="{% url 'submissions:save_all_to_google_drive' %}" class="btn-gdrive-all" id="saveAllGdriveBtn" title="Sync all student ZIPs directly to Google Drive folder without downloading">
+        <span>☁️</span>
+        <span>Save All to Google Drive</span>
+      </a>
+
+      <!-- Download All ZIPs Button -->
+      <a href="{% url 'submissions:download_all_zips' %}" class="btn-download-all" id="downloadAllBtn" title="Download all submitted ZIPs in a master archive">
+        <span>📦</span>
+        <span>Download All ZIPs</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="metrics-grid">
+    <!-- Total Submissions -->
+    <div class="metric-card">
+      <div class="metric-icon-box icon-blue">📂</div>
+      <div>
+        <div class="metric-label">Total Submissions</div>
+        <div class="metric-value">{{ metrics.total_submissions }}</div>
+      </div>
+    </div>
+
+    <!-- Pending Submissions -->
+    <div class="metric-card">
+      <div class="metric-icon-box icon-amber">⏳</div>
+      <div>
+        <div class="metric-label">Pending</div>
+        <div class="metric-value">{{ metrics.pending_submissions }}</div>
+      </div>
+    </div>
+
+    <!-- Reviewed Submissions -->
+    <div class="metric-card">
+      <div class="metric-icon-box icon-emerald">✓</div>
+      <div>
+        <div class="metric-label">Reviewed</div>
+        <div class="metric-value">{{ metrics.reviewed_submissions }}</div>
+      </div>
+    </div>
+
+    <!-- Google Drive Synced -->
+    <div class="metric-card">
+      <div class="metric-icon-box icon-purple">☁️</div>
+      <div>
+        <div class="metric-label">Google Drive Synced</div>
+        <div class="metric-value">{{ metrics.gdrive_uploaded }}</div>
+      </div>
+    </div>
+
+    <!-- Total Storage -->
+    <div class="metric-card">
+      <div class="metric-icon-box icon-indigo">💾</div>
+      <div>
+        <div class="metric-label">Total Storage</div>
+        <div class="metric-value" style="font-size: 1.35rem;">{{ metrics.total_storage_formatted }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="filter-card">
+    <form method="GET" action="{% url 'submissions:dashboard' %}" class="filter-form">
+      <div class="filter-input-group" style="flex: 2; min-width: 220px;">
+        {{ filter_form.q }}
+      </div>
+      <div class="filter-input-group" style="flex: 1; min-width: 140px;">
+        {{ filter_form.status }}
+      </div>
+      <div class="filter-input-group" style="flex: 1; min-width: 150px;">
+        {{ filter_form.gdrive_status }}
+      </div>
+      <div class="filter-input-group" style="flex: 1; min-width: 150px;">
+        {{ filter_form.date }}
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn-filter">
+          Filter
+        </button>
+        {% if search_query or status_filter or gdrive_filter or date_filter %}
+          <a href="{% url 'submissions:dashboard' %}" class="btn-filter-reset">
+            Reset
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Submissions Table Card -->
+  <div class="table-card">
+    <div class="table-responsive">
+      <table class="submissions-table">
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Task Name</th>
+            <th>ZIP Filename</th>
+            <th>File Size</th>
+            <th>Submitted At</th>
+            <th>Review Status</th>
+            <th>Google Drive</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in submissions %}
+            <tr>
+              <td>
+                <div class="student-meta">
+                  <span class="student-name-bold">{{ sub.student_name }}</span>
+                  <span class="submission-id-sub">
+                    ID: #{{ sub.id }}
+                    {% if sub.sha256_checksum %}
+                      &bull; <span title="SHA-256: {{ sub.sha256_checksum }}">SHA: {{ sub.sha256_checksum|slice:":8" }}...</span>
+                    {% endif %}
+                  </span>
+                </div>
+              </td>
+              <td>{{ sub.task_name }}</td>
+              <td>
+                <span title="{{ sub.stored_filename }}">
+                  {{ sub.original_filename }}
+                </span>
+              </td>
+              <td>{{ sub.file_size_formatted }}</td>
+              <td>{{ sub.submitted_at|date:"M d, Y, h:i A" }}</td>
+              <td>
+                {% if sub.status == 'Reviewed' %}
+                  <span class="badge-status badge-reviewed">Reviewed</span>
+                {% else %}
+                  <span class="badge-status badge-pending">Pending</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if sub.google_drive_status == 'Uploaded' %}
+                  <span class="badge-status badge-gdrive-uploaded" title="Uploaded: {{ sub.google_drive_uploaded_at|date:'M d, Y H:i' }}">
+                    ☁️ Uploaded
+                  </span>
+                  {% if sub.google_drive_url %}
+                    <a href="{{ sub.google_drive_url }}" target="_blank" rel="noopener noreferrer" class="link-gdrive-external" title="Open in Google Drive">
+                      ↗
+                    </a>
+                  {% endif %}
+                {% elif sub.google_drive_status == 'Failed' %}
+                  <span class="badge-status badge-gdrive-failed" title="{{ sub.google_drive_error|default:'Upload failed' }}">
+                    ❌ Failed
+                  </span>
+                {% else %}
+                  <span class="badge-status badge-gdrive-not-uploaded">
+                    Not Uploaded
+                  </span>
+                {% endif %}
+              </td>
+              <td style="text-align: right;">
+                <div class="table-actions" style="justify-content: flex-end;">
+                  <!-- View Details -->
+                  <a href="{% url 'submissions:submission_detail' sub.id %}" class="btn-table-action btn-action-view" title="View Submission Details">
+                    View
+                  </a>
+
+                  <!-- Save to Google Drive -->
+                  <a href="{% url 'submissions:save_to_google_drive' sub.id %}" class="btn-table-action btn-action-gdrive" title="Upload original ZIP to Google Drive">
+                    ☁️ Drive
+                  </a>
+
+                  <!-- Download Original ZIP -->
+                  <a href="{% url 'submissions:download_submission_zip' sub.id %}" class="btn-table-action btn-action-download" title="Download Student's Original ZIP">
+                    Download
+                  </a>
+
+                  <!-- Mark Reviewed / Toggle Status -->
+                  <form method="POST" action="{% url 'submissions:mark_reviewed' sub.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="btn-table-action btn-action-status" title="Toggle Reviewed / Pending">
+                      {% if sub.status == 'Pending' %}
+                        Mark Reviewed
+                      {% else %}
+                        Mark Pending
+                      {% endif %}
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="8">
+                <div class="empty-state">
+                  <div class="empty-state-icon">📭</div>
+                  <div class="empty-state-title">No submissions found</div>
+                  <p class="empty-state-text">
+                    {% if search_query or status_filter or gdrive_filter or date_filter %}
+                      No submissions match your active search filters. Try clearing your filters.
+                    {% else %}
+                      No student task submissions have been received yet.
+                    {% endif %}
+                  </p>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if submissions.paginator.num_pages > 1 %}
+      <div class="pagination-wrapper">
+        <div class="pagination-info">
+          Showing <strong>{{ submissions.start_index }}</strong> to <strong>{{ submissions.end_index }}</strong> of <strong>{{ submissions.paginator.count }}</strong> submissions
+        </div>
+
+        <nav class="pagination-nav" aria-label="Table pagination">
+          {% if submissions.has_previous %}
+            <a href="?page={{ submissions.previous_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}" class="page-btn">
+              &laquo; Previous
+            </a>
+          {% else %}
+            <span class="page-btn disabled">&laquo; Previous</span>
+          {% endif %}
+
+          {% for num in submissions.paginator.page_range %}
+            {% if submissions.number == num %}
+              <span class="page-btn active">{{ num }}</span>
+            {% elif num > submissions.number|add:'-3' and num < submissions.number|add:'3' %}
+              <a href="?page={{ num }}{% if pagination_query %}&{{ pagination_query }}{% endif %}" class="page-btn">
+                {{ num }}
+              </a>
+            {% endif %}
+          {% endfor %}
+
+          {% if submissions.has_next %}
+            <a href="?page={{ submissions.next_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}" class="page-btn">
+              Next &raquo;
+            </a>
+          {% else %}
+            <span class="page-btn disabled">Next &raquo;</span>
+          {% endif %}
+        </nav>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'submissions/js/admin.js' %}"></script>
+{% endblock %}

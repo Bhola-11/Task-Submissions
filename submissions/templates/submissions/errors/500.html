@@ -1,0 +1,18 @@
+{% extends 'submissions/base.html' %}
+
+{% block title %}500 - Internal Server Error &bull; TaskPortal{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="text-align: center;">
+  <div class="card">
+    <div style="font-size: 4rem; margin-bottom: 1rem;">⚙️</div>
+    <h1 class="card-title">500 - Internal Server Error</h1>
+    <p class="card-subtitle" style="margin-bottom: 2rem;">
+      {{ error_message|default:"An unexpected server error occurred. Our engineering team has been notified." }}
+    </p>
+    <a href="{% url 'submissions:submit' %}" class="btn-primary" style="display: inline-flex; width: auto;">
+      Return to Home
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'submissions/base.html' %}
+{% load static %}
+
+{% block title %}Task Submitted Successfully &bull; TaskPortal{% endblock %}
+
+{% block content %}
+<div class="container container-narrow">
+  <div class="card">
+    <div class="success-hero">
+      <div class="success-icon-badge">✓</div>
+      <h1 class="card-title" style="color: var(--success-text);">Task Submitted Successfully</h1>
+      <p class="card-subtitle">Your project ZIP file has been securely uploaded and stored in our database.</p>
+    </div>
+
+    <div class="summary-list">
+      <div class="summary-row">
+        <span class="summary-label">Submission ID</span>
+        <span class="summary-value">
+          #{{ submission.id }}
+          <button type="button" class="btn-copy btn-copy-id" data-id="{{ submission.id }}" title="Copy Submission ID">
+            Copy ID
+          </button>
+        </span>
+      </div>
+
+      <div class="summary-row">
+        <span class="summary-label">Student Name</span>
+        <span class="summary-value">{{ submission.student_name }}</span>
+      </div>
+
+      <div class="summary-row">
+        <span class="summary-label">Task Name</span>
+        <span class="summary-value">{{ submission.task_name }}</span>
+      </div>
+
+      <div class="summary-row">
+        <span class="summary-label">ZIP Filename</span>
+        <span class="summary-value">{{ submission.original_filename }}</span>
+      </div>
+
+      <div class="summary-row">
+        <span class="summary-label">File Size</span>
+        <span class="summary-value">{{ submission.file_size_formatted }}</span>
+      </div>
+
+      <div class="summary-row">
+        <span class="summary-label">Submission Date / Time</span>
+        <span class="summary-value">{{ submission.submitted_at|date:"M d, Y, h:i A" }} UTC</span>
+      </div>
+
+      <div class="summary-row">
+        <span class="summary-label">Status</span>
+        <span class="summary-value">
+          {% if submission.status == 'Reviewed' %}
+            <span class="badge-status badge-reviewed">Reviewed</span>
+          {% else %}
+            <span class="badge-status badge-pending">Pending</span>
+          {% endif %}
+        </span>
+      </div>
+    </div>
+
+    <div class="success-actions">
+      <button type="button" class="btn-secondary btn-copy-id" data-id="{{ submission.id }}">
+        Copy Submission ID
+      </button>
+      <a href="{% url 'submissions:submit' %}" class="btn-primary" style="text-decoration: none;">
+        Submit Another Task
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'submissions/js/admin.js' %}"></script>
+{% endblock %}
